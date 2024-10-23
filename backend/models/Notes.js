@@ -1,27 +1,29 @@
-import { type } from '@testing-library/user-event/dist/type';
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 const { Schema } = mongoose;
-const mongoose =require('mongooes');
 
 const NotesSchema = new Schema({
-    tittle: {
-      type: String,
-      required : true
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User', // Ensure this matches your User model name
+        required: true // Make it required if every note must belong to a user
     },
-    description: {
-      type: String,
-      required : true,
-    
+    title:{
+        type: String,
+        required: true
     },
-    tag: {
-      type: String,
-        default: 'general'
+    description:{
+        type: String,
+        required: true, 
     },
-    date: {
-      type: String,
-      default : Date.now
+    tag:{
+        type: String,
+        default: "General"
+    },
+    date:{
+        type: Date,
+        default: Date.now
     },
 
   });
 
-  module.exports = mongoose.model('Notes',NotesSchema);
+  module.exports = mongoose.model('notes', NotesSchema);
