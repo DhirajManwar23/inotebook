@@ -93,12 +93,12 @@ route.get('/Login',
 // ROUTE 3: Get loggedin User Details using: POST "/api/auth/getuser". Login required
 route.post('/getuser', fethcuser,  async (req, res) => {
     try {
-      userId = req.user.id;
+      userId = req.user._id;
       const user = await User.findById(userId).select("-password")
-      res.send(user)
+      return res.send(user)
     } catch (error) {
       console.error(error.message);
-      res.status(500).send("Internal Server Error");
+      return res.status(500).send("Internal Server Error");
     }
   })
 

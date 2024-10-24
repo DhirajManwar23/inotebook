@@ -8,8 +8,8 @@ const { body,validationResult } = require('express-validator');
 route.get('/fetchallnotes', fetchuser, async (req, res) => {
         // Access user ID correctly
         try {
-            const notes = await Notes.find({ user: req.user._id }); // Use `user` as defined in your schema
-            res.json(notes);
+            const notes = await Notes.find({ user: req.user.id }); // Use `user` as defined in your schema
+           return res.json({notes});
         }  catch (error) {
             console.error(error.message);
             res.status(500).send("Some Error occured");
@@ -20,12 +20,12 @@ route.get('/fetchallnotes', fetchuser, async (req, res) => {
 
 
 // ROUTE 2: Add a new Note using: POST "/api/auth/addnote". Login required
-route.get('/addnotes', fetchuser, [
+route.post('/addnotes', fetchuser, [
     body('title', "Enter a valid Tittle").isLength({ min: 3 }),
     body('description', "Enter a valid description").isLength({ min: 3 }),
 ], async (req, res) => {
     try {
-       
+    
         const{ title, description, tag } = req.body;
         const errors = validationResult(req);   
         if (!errors.isEmpty()) {
@@ -34,16 +34,8 @@ route.get('/addnotes', fetchuser, [
 
            // Create a new note and store the user ID
         const note = new Notes({
-            title, description, tag, user: req.user._id
+            title, description, tag, user: req.user.id
         })
-
-      
-        //  const note = new Notes({
-        //     title,
-        //     description,
-        //     tag,
-        //     user: req.user._id // Assuming fetchuser middleware sets req.user
-        // });
 
         const savenotes =  await note.save();
       return  res.json(savenotes);
@@ -53,5 +45,49 @@ route.get('/addnotes', fetchuser, [
     }
 
 });
+
+// ROUTE 3: Update an existing Note using: POST "/api/notes/updatenote". Login required
+
+route.put('/updatenote/:id', fetchuser, async  (req, res) => {
+
+    route.put('/updatenote/:id', fetchuser, async (req, res) => {
+        console.log('Request Params:', req.params); // Debugging
+        console.log('Request Body:', req.body); // Debugging
+    
+        const { title, description, tag } = req.body;
+        const newNote = {};
+    
+        if (title) { newNote.title = title; }
+        if (description) { newNote.description = description; }
+        if (tag) { newNote.tag = tag; }
+    
+        try {
+            // Find the note to be updated
+            let note = await Notes.findById(req.params.id);
+    
+            if (!note) {
+                return res.status(404).send("Note not found");
+            }
+    
+            if (note.user.toString() !== req.user.id) {
+                return res.status(401).send("Not allowed");
+            }
+    
+            // Find the note by ID and update it
+            note = await Notes.findByIdAndUpdate(req.params.id, { $set: newNote }, { new: true });
+            
+            if (!note) {
+                return res.status(404).send("Note not found after update attempt");
+            }
+    
+            res.json({ note });
+        } catch (error) {
+            console.error("Error updating note:", error);
+            return res.status(500).send("Internal Server Error");
+        }
+    });
+
+
+})
 
 module.exports = route;
