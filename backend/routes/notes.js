@@ -50,10 +50,47 @@ route.post('/addnotes', fetchuser, [
 
 route.put('/updatenote/:id', fetchuser, async  (req, res) => {
 
-    route.put('/updatenote/:id', fetchuser, async (req, res) => {
-        console.log('Request Params:', req.params); // Debugging
-        console.log('Request Body:', req.body); // Debugging
+       
+        const { title, description, tag } = req.body;
+        const newNote = {};
     
+        if (title) { newNote.title = title; }
+        if (description) { newNote.description = description; }
+        if (tag) { newNote.tag = tag; }
+    
+        try {
+            // Find the note to be updated
+            let note = await Notes.findById(req.params.id);
+    
+            if (!note) {
+                return res.status(404).send("Note not found");
+            }
+            
+            //find user user id in note collec. and also check log in userid for matching.
+            if (note.user.toString() !== req.user.id) {
+                return res.status(401).send("Not allowed");
+            }
+    
+            // Find the note by ID and update it
+            note = await Notes.findByIdAndUpdate(req.params.id, { $set: newNote }, { new: true });
+            
+            if (!note) {
+                return res.status(404).send("Note not found after update attempt");
+            }
+    
+            res.json({ note });
+        } catch (error) {
+            console.error("Error updating note:", error);
+            return res.status(500).send("Internal Server Error");
+        }
+    
+
+
+})
+
+// ROUTE 3: Update an existing Note using: POST "/api/notes/updatenote". Login required
+route.delete('/deletenote/:id', fetchuser, async  (req, res) => {
+
         const { title, description, tag } = req.body;
         const newNote = {};
     
@@ -74,20 +111,21 @@ route.put('/updatenote/:id', fetchuser, async  (req, res) => {
             }
     
             // Find the note by ID and update it
-            note = await Notes.findByIdAndUpdate(req.params.id, { $set: newNote }, { new: true });
+            note = await Notes.findByIdAndDelete(req.params.id, { $set: newNote }, { new: true });
             
             if (!note) {
                 return res.status(404).send("Note not found after update attempt");
             }
     
-            res.json({ note });
+            res.json({"success":"success" , note : note});
         } catch (error) {
             console.error("Error updating note:", error);
             return res.status(500).send("Internal Server Error");
         }
-    });
+    
 
 
 })
+
 
 module.exports = route;
